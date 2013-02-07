@@ -2,7 +2,6 @@
 /**
  * @package Commentary
  */
-/*
 
 /*
 Plugin Name: Commentary
@@ -19,7 +18,6 @@ License: MIT
 // Admin Section
 //
 
-/* Tests for adding a field instead of using oembed
 
 // Register the meta box, possible alternative to oembed
 
@@ -70,13 +68,10 @@ function commentary_save_post( $post_id) {
     update_post_meta( $post_id, 'commentary_vimeo_url',  $data);
 }
 
-*/
 
 ////
 // Post Section
 //
-
-/* Add data from admit field, oembed seems better
 
 add_filter('the_content', 'commentary_content');
 
@@ -86,14 +81,13 @@ function commentary_content($content) {
 	$commentary_vimeo_url = get_post_meta( $post->ID, $key = 'commentary_vimeo_url', $single = true );
 	$commentary = <<<VIDEOLOG
 
-	<div>$commentary_vimeo_url</div>
+	<div id="popcorn" data-url="$commentary_vimeo_url"></div>
 
 VIDEOLOG;
 
 	return $commentary.$content;
 }
 
-*/
 
 // Add timestamp field to comment form
 
@@ -174,6 +168,7 @@ add_action( 'wp_enqueue_scripts', 'commentary_scripts' );
 function commentary_scripts()
 {
 	wp_enqueue_script( 'froogaloop', 'http://a.vimeocdn.com/js/froogaloop2.min.js');
+	wp_enqueue_script('popcorn', 'http://popcornjs.org/code/dist/popcorn-complete.js');
 	wp_enqueue_script( 'commentary', plugins_url( '/js/commentary.js', __FILE__ ), array('jquery') );
 }
 
