@@ -14,59 +14,38 @@ License: MIT
 */
 
 
-////
-// Admin Section
-//
+include_once dirname( __FILE__ ) . '/commentary-admin.php';
+include_once dirname( __FILE__ ) . '/commentary-ajax.php';
 
+// Javascript and Style 
 
-// Register the meta box, possible alternative to oembed
+add_action( 'wp_enqueue_scripts', 'commentary_scripts' );
 
-add_action( 'add_meta_boxes', 'commentary_meta_boxes' );
+function commentary_scripts()
+{
+	global $wp_query;
 
-function commentary_meta_boxes() {
-	add_meta_box(
-			'commentary_meta_box',	// this is HTML id of the box on edit screen
-			'Commentary',		// title of the box
-			'commentary_callback',	// function to be called to display the checkboxes, see the function below
-			'post',			// on which edit screen the box should appear
-			'normal',		// part of page where the box should appear
-			'default'		// priority of the box
-		    );
+	//wp_enqueue_script( 'froogaloop', 'http://a.vimeocdn.com/js/froogaloop2.min.js');
+	wp_enqueue_script('popcorn', plugins_url('/js/popcorn.js', __FILE__ ));
+	wp_enqueue_script( 'commentary', plugins_url( '/js/commentary.js', __FILE__ ), array('jquery') );
+
+	// Pass variables
+
+	wp_localize_script('commentary', 'commentaryAjax', array(
+		'url' => admin_url( 'admin-ajax.php' ),
+		'template' => plugins_url( '/templates/commentary.mustache', __FILE__ ),
+		'postid' =>  $wp_query->post->ID,
+		'nonce' => wp_create_nonce( 'commentary-nonce' )
+	));
+
+	// Styles
+
+	wp_register_style( 'commentary-css', plugins_url( '/css/commentary.css', __FILE__ ), array(),
+		'20130214', 'all' );
+	wp_enqueue_style( 'commentary-css' );
 }
 
-// Display the meta box
 
-function commentary_callback( $post, $metabox ) {
-	// nonce field for security check, you can have the same
-	// nonce field for all your meta boxes of same plugin
-	wp_nonce_field( plugin_basename( __FILE__ ), 'commentary_nonce' );
-
-	$value = get_post_meta( $post->ID, $key = 'commentary_vimeo_url', $single = true );
-?>		
-	<label>Vimeo URL</label>
-	<input type="text" name="commentary_vimeo_url" value="<?=$value?>" />
-<?
-}
-
-// Save data from meta box
-
-add_action( 'save_post', 'commentary_save_post' );
-
-function commentary_save_post( $post_id) {
-
-    // Check for autosave 
-
-    if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
-
-    // Security check
-
-    if ( !wp_verify_nonce( $_POST['commentary_nonce'], plugin_basename( __FILE__ ) ) ) return;
-
-    // Store data
-
-    $data = sanitize_text_field( $_POST['commentary_vimeo_url'] );
-    update_post_meta( $post_id, 'commentary_vimeo_url',  $data);
-}
 
 
 ////
@@ -100,50 +79,6 @@ function commentary_comment_fields() {
 <?
 }
 
-// Save comment data
-
-add_action( 'comment_post', 'commentary_comment_post', 10, 1 );
-
-function commentary_comment_post( $comment_id ) {
-    if( isset( $_POST['commentary_timestamp'] ) )
-        update_comment_meta( $comment_id, 'commentary_timestamp', esc_attr( $_POST['commentary_timestamp'] ) );
-}
-
-// Add to admin comment form
-
-add_action( 'add_meta_boxes_comment', 'commentary_meta_boxes_comment' );
-
-function commentary_meta_boxes_comment()
-{
-    add_meta_box( 'commentary_comment_meta_box',
-	'Video Timestamp',
-	'commentary_comment_callback', 'comment', 'normal', 'high' );
-}
-
-function commentary_comment_callback( $comment )
-{
-    $timestamp = get_comment_meta( $comment->comment_ID, 'commentary_timestamp', true );
-	wp_nonce_field( plugin_basename( __FILE__ ), 'commentary_comment_nonce' );
-    ?>
-    <p>
-        <label for="commentary_timestamp">Video Timestamp</label>
-        <input type="text" name="commentary_timestamp" value="<?php echo esc_attr( $timestamp ); ?>" class="widefat" />
-    </p>
-
-<?
-}
-
-// Save in admin form
-
-add_action( 'edit_comment', 'commentary_edit_comment' );
-
-function commentary_edit_comment( $comment_id )
-{
-    if ( !wp_verify_nonce( $_POST['commentary_comment_nonce'], plugin_basename( __FILE__ ) ) ) return;
-
-    if( isset( $_POST['commentary_timestamp'] ) )
-        update_comment_meta( $comment_id, 'commentary_timestamp', esc_attr( $_POST['commentary_timestamp'] ) );
-}
 
 // Add to comment display
 
@@ -161,16 +96,10 @@ function commentary_comment_text( $text, $comment )
     return $text;
 }
 
-// Comments javascript
 
-add_action( 'wp_enqueue_scripts', 'commentary_scripts' );
+/*
 
-function commentary_scripts()
-{
-	wp_enqueue_script( 'froogaloop', 'http://a.vimeocdn.com/js/froogaloop2.min.js');
-	wp_enqueue_script('popcorn', 'http://popcornjs.org/code/dist/popcorn-complete.js');
-	wp_enqueue_script( 'commentary', plugins_url( '/js/commentary.js', __FILE__ ), array('jquery') );
-}
+Using a meta field instead.
 
 ////
 // Oembed routines
@@ -201,5 +130,6 @@ function commentary_oembed_result($html, $url, $args) {
         return $html;
 }
 
-?>
+*/
 
+?>
