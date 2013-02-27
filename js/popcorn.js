@@ -1970,6 +1970,9 @@
 
 
       settings.ajax.open( settings.type, settings.url, settings.async );
+      if ( settings.type === "POST" && settings.data ) {
+        settings.ajax.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+      }
       settings.ajax.send( settings.data || null );
 
       return Popcorn.xhr.httpData( settings );

@@ -1,38 +1,131 @@
-var timestamp = 0;
+"use strict"
 
-var iframe, player;
+Popcorn.getScript( "http://mustache.github.com/extras/mustache.js");
 
+Popcorn(function() {
+
+
+	var popcornDiv = document.getElementById('popcorn');
+
+	if (popcornDiv == null) {
+		console.log("I know when I'm not needed.");
+		return;
+	}
+
+	// Feed the video to popcorn
+
+	var videoURL = popcornDiv.getAttribute('data-url');
+	var pop = Popcorn.vimeo( "#popcorn", videoURL );
+
+	// Make a div for commentary
+
+	var commentaryDiv = document.createElement('div');
+	commentaryDiv.setAttribute("id", "commentary");
+	popcornDiv.parentNode.insertBefore(commentaryDiv, popcornDiv.nextSibling);
+
+	// Setup commentary
+
+	pop.commentary({
+		start: 0,
+		target: "commentary",
+		commentsURL: commentaryAjax.commentsURL,
+		commentsData: commentaryAjax.commentsData,
+		commentPostURL: commentaryAjax.commentPostURL,
+		commentPostData: commentaryAjax.commentPostData,
+		commentsTemplateURL: commentaryAjax.commentsTemplateURL,
+		formTemplateURL: commentaryAjax.formTemplateURL,
+	});
+});
 
 (function (Popcorn) {  
  Popcorn.plugin( "commentary" , function( options ) {
 
-	var commentData, commentTemplate = null;
-	var commentHTML;
-	var commentDiv = document.getElementById( options.target );
+	var popcornObject = this;
 
-	console.log(commentDiv);
+	var commentaryDiv = document.getElementById( options.target );
 
-	Popcorn.getScript( "http://mustache.github.com/extras/mustache.js");
+	var commentData, commentsTemplate = null;
+	var commentHTML = "";
+	var commentsDiv;
+
+	var formTemplate;
+	var formDiv;
+
+	var lastIndex = 0; 
+
+	// Create divs
+
+	var commentsDiv = document.createElement('div');
+	commentsDiv.setAttribute("id", "commentary-comments");
+	commentaryDiv.insertBefore(commentsDiv,commentaryDiv.firstChild);
+
+	var formDiv = document.createElement('div');
+	formDiv.setAttribute("id", "commentary-form");
+	commentaryDiv.insertBefore(formDiv,commentsDiv.nextSibling);
+
+	// External requests
 
 	Popcorn.xhr({
-		url: options.template,
+		url: options.commentsTemplateURL,
 		dataType: 'text',
 		success: function(data) {
-			commentTemplate = data;
-			checkReady();
+			commentsTemplate = data;
+			dataReady();
 		}
 	});
 
+	function loadCommentData() {
+
+		Popcorn.xhr({
+			type: "POST" ,
+			url: options.commentsURL,
+			data: options.commentsData,
+			dataType: 'json',
+			success: function(data) {
+				commentData = data;
+				dataReady();
+			}
+		});
+	}
+	
+	loadCommentData();
+
+	function dataReady() {
+		if (commentData != null && commentsTemplate != null) {
+			commentHTML = Mustache.to_html(commentsTemplate, commentData);
+			commentsDiv.innerHTML = commentHTML;
+		}	
+	}
+
 	Popcorn.xhr({
-		type: "GET" ,
-		url: commentaryAjax.url,
-		data: "action=commentary" +
-			"&postid=" + commentaryAjax.postid +
-			"&nonce=" + commentaryAjax.nonce,
-		dataType: 'json',
+		url: options.formTemplateURL,
+		dataType: 'text',
 		success: function(data) {
-			commentData = data;
-			checkReady();
+			formDiv.innerHTML = data;
+
+			document.getElementById("commentary-save").onclick = function() {
+
+				var formAuthor = document.getElementById('commentary-author').value;
+				var formComment = document.getElementById('commentary-comment').value;
+				var formEmail = document.getElementById('commentary-email').value;
+
+				var formTimestamp = popcornObject.currentTime();
+
+				Popcorn.xhr({
+					type: "POST" ,
+					url: options.commentPostURL,
+					data: "author=" + formAuthor +
+						"&comment=" + formComment + 
+						"&email=" + formEmail + 
+						"&commentary_timestamp=" + formTimestamp + 
+						options.commentPostData,
+					dataType: 'json',
+					success: function(data) {
+						loadCommentData();
+					}
+				});
+
+			};
 		}
 	});
 
@@ -41,9 +134,9 @@ var iframe, player;
 		// Insanely inefficient
 
 		var commentIndex = 0;
-		var comments = commentDiv.getElementsByTagName("div");
+		var comments = commentsDiv.getElementsByTagName("div");
 
-		for(commentIndex=0; commentIndex < comments.length; commentIndex++) {
+		for(commentIndex=lastIndex; commentIndex < comments.length; commentIndex++) {
 			comments[commentIndex].style.background = "";
 			var timestamp = comments[commentIndex].getAttribute("data-timestamp");
 			if (this.currentTime() <= timestamp) break;
@@ -52,18 +145,15 @@ var iframe, player;
 		if (commentIndex > 0) commentIndex -= 1;
 
 		comments[commentIndex].style.background = "#99ccff";
-		var commentPosition = comments[commentIndex].offsetTop - commentDiv.offsetTop;
-		commentDiv.scrollTop = commentPosition;
+
+		if (commentIndex == lastIndex) return;
+
+		lastIndex = commentIndex;
+		var commentPosition = comments[commentIndex].offsetTop - commentsDiv.offsetTop -
+			commentsDiv.clientHeight /2 + comments[commentIndex].clientHeight /2 ;
+		commentsDiv.scrollTop = commentPosition;
 
 	});
-
-	function checkReady() {
-		if (commentData != null && commentTemplate != null) {
-			console.log(commentData);
-			commentHTML = Mustache.to_html(commentTemplate, commentData);
-			commentDiv.innerHTML = commentHTML;
-		}	
-	}
 
 	return {
 		start: function(){
@@ -78,48 +168,6 @@ var iframe, player;
 
 
 jQuery('document').ready( function() {
-
-	if (jQuery('#commentary_player').length > 0) {
-		iframe = jQuery('#commentary_player')[0];
-		player = $f(iframe);
-
-		player.addEvent('ready', function() {
-			player.addEvent('playProgress', onPlayProgress);
-		});
-
-	}
-
-	if (jQuery("#popcorn").length > 0) {
-
-		var videoURL = jQuery("#popcorn").attr('data-url');
-
-		var commentaryDiv = jQuery('<div/>').attr({'id':'commentary'});
-		jQuery('#popcorn').after(commentaryDiv);
-
-		var pop = Popcorn.vimeo( "#popcorn", videoURL );
-
-		pop.commentary({
-			start: 0,
-			template: commentaryAjax.template,
-			target: "commentary"
-		});
-
-		pop.on( "timeupdate", function() {
-		    timestamp = this.currentTime();
-		});
-
-
-		//var dataDisplay = jQuery('<div/>').attr({'id':'dataDisplay'}).css({'height':100});
-		//jQuery('#popcorn').after(dataDisplay);
-
-		//pop.footnote({
-		//	start: 2,
-		//	end: 5,
-		//	target: "dataDisplay",
-		//	text: "Somebody should put some comments here..."
-		//});
-
-	}
 
 	jQuery('#commentform').submit( function(e) {
 
@@ -137,31 +185,3 @@ jQuery('document').ready( function() {
 	});
 
 });
-
-function fetchComments() {
-
-	var commentData;
-
-	jQuery.ajax({
-		type: "post" ,
-		url: commentaryAjax.url,
-		data: {
-			action: "commentary",
-			postid: commentaryAjax.postid,
-			nonce: commentaryAjax.nonce
-		},
-		dataType: 'json',
-		async: false,
-		error: function(error) { 
-			console.log(error);
-		},
-		success: function(data) {
-			console.log(data);
-		}
-	});
-
-}
-
-function onPlayProgress(data, id) {
-	timestamp = data.seconds;
-}

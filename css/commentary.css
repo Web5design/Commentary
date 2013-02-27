@@ -1,6 +1,36 @@
 #commentary {
+	position: relative;
 	width: 100%;
 	height: 240px;
-	overflow: scroll;
 	background: #efefef;
+	border: 1px #ccc solid;
+}
+
+#commentary #commentary-comments {
+	height: 240px;
+	overflow: scroll;
+}
+
+#commentary #commentary-comments div {
+	padding: 12px;
+	border-bottom: 1px #ccc solid;
+}
+
+#commentary #commentary-comments div p {
+	padding: 0;
+	margin: 0;
+}
+
+#commentary #commentary-form {
+	position: absolute;
+	background: #cfcfcf;
+	top: 12px;
+	right: 12px;
+	padding: 12px;
+	border: 1px solid #999;
+	width: 240px;
+}
+
+#commentary-save {
+	cursor: pointer;
 }

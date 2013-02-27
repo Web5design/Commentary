@@ -31,11 +31,16 @@ function commentary_scripts()
 
 	// Pass variables
 
+	$postid = $wp_query->post->ID; 
+	$nonce = wp_create_nonce( 'commentary-nonce' );
+
 	wp_localize_script('commentary', 'commentaryAjax', array(
-		'url' => admin_url( 'admin-ajax.php' ),
-		'template' => plugins_url( '/templates/commentary.mustache', __FILE__ ),
-		'postid' =>  $wp_query->post->ID,
-		'nonce' => wp_create_nonce( 'commentary-nonce' )
+		'commentsURL' => admin_url( 'admin-ajax.php' ),
+		'commentsData' => '&action=commentary&postid=' . $postid . '&nonce=' . $nonce,
+		'commentPostURL' => site_url( '/wp-comments-post.php' ),
+		'commentPostData' => '&comment_post_ID=' . $postid . '&nonce=' . $nonce,
+		'commentsTemplateURL' => plugins_url( '/templates/commentary-comments.mustache', __FILE__ ),
+		'formTemplateURL' => plugins_url( '/templates/commentary-form.mustache', __FILE__ )
 	));
 
 	// Styles
@@ -95,41 +100,5 @@ function commentary_comment_text( $text, $comment )
     }
     return $text;
 }
-
-
-/*
-
-Using a meta field instead.
-
-////
-// Oembed routines
-//
-
-// Change oembed url
-
-add_filter( 'oembed_fetch_url', 'commentary_fetch_url', 10, 3);
-
-function commentary_fetch_url(  $provider, $url, $args ) {
-
-	if ( 'vimeo.com' == parse_url( $url, PHP_URL_HOST ) ) {
-		$provider = add_query_arg( 'api', urlencode( 1 ), $provider );
-		$provider = add_query_arg( 'player_id', urlencode( "commentary_player" ), $provider );
-	}
-
-	return $provider;
-}
-
-// Alter oembed results
-
-add_filter('oembed_result','commentary_oembed_result',10,3);
-
-function commentary_oembed_result($html, $url, $args) {
-	if ( 'vimeo.com' == parse_url( $url, PHP_URL_HOST ) ) {
-                $html = str_replace('iframe','iframe id="commentary_player"',$html);
-        }
-        return $html;
-}
-
-*/
 
 ?>
