@@ -19,15 +19,18 @@ Popcorn(function() {
 
 	// Make a div for commentary
 
+	var commentaryDivID = "commentary-" + commentaryAjax.postID;
+
 	var commentaryDiv = document.createElement('div');
-	commentaryDiv.setAttribute("id", "commentary");
+	commentaryDiv.setAttribute("id", commentaryDivID);
+	commentaryDiv.setAttribute("class", "commentary");
 	popcornDiv.parentNode.insertBefore(commentaryDiv, popcornDiv.nextSibling);
 
 	// Setup commentary
 
 	pop.commentary({
 		start: 0,
-		target: "commentary",
+		target: commentaryDivID,
 		commentsURL: commentaryAjax.commentsURL,
 		commentsData: commentaryAjax.commentsData,
 		commentPostURL: commentaryAjax.commentPostURL,
@@ -76,6 +79,8 @@ Popcorn(function() {
 
 	function loadCommentData() {
 
+		console.log(options.commentsData);
+
 		Popcorn.xhr({
 			type: "POST" ,
 			url: options.commentsURL,
@@ -103,6 +108,14 @@ Popcorn(function() {
 		success: function(data) {
 			formDiv.innerHTML = data;
 
+			document.getElementById("commentary-show").onclick = function() {
+				document.getElementById('commentary-formElement').style.display = "block";
+			}
+
+			document.getElementById("commentary-cancel").onclick = function() {
+				document.getElementById('commentary-formElement').style.display = "none";
+			}
+
 			document.getElementById("commentary-save").onclick = function() {
 
 				var formAuthor = document.getElementById('commentary-author').value;
@@ -122,6 +135,9 @@ Popcorn(function() {
 					dataType: 'json',
 					success: function(data) {
 						loadCommentData();
+							
+						document.getElementById('commentary-formElement').style.display = "none";
+						document.getElementById('commentary-comment').value = "";
 					}
 				});
 

@@ -12,8 +12,8 @@ add_action( 'wp_ajax_commentary', 'json_comments' );
 function json_comments() {
 	// get the submitted parameters
 	$postID = $_REQUEST['postid'];
- 
-	$comments = get_comments('postid='+$postID);
+
+	$comments = get_comments('post_id='.$postID);
 
 	foreach($comments as $comment) {
 		$comment->timestamp = get_comment_meta($comment->comment_ID, 'commentary_timestamp', true);

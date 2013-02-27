@@ -35,6 +35,7 @@ function commentary_scripts()
 	$nonce = wp_create_nonce( 'commentary-nonce' );
 
 	wp_localize_script('commentary', 'commentaryAjax', array(
+		'postID' => $postid,
 		'commentsURL' => admin_url( 'admin-ajax.php' ),
 		'commentsData' => '&action=commentary&postid=' . $postid . '&nonce=' . $nonce,
 		'commentPostURL' => site_url( '/wp-comments-post.php' ),

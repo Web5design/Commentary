@@ -1,36 +1,68 @@
-#commentary {
+.commentary {
 	position: relative;
 	width: 100%;
-	height: 240px;
+	height: 300px;
 	background: #efefef;
 	border: 1px #ccc solid;
 }
 
-#commentary #commentary-comments {
-	height: 240px;
+.commentary #commentary-comments {
+	height: 300px;
 	overflow: scroll;
 }
 
-#commentary #commentary-comments div {
+.commentary #commentary-comments div {
 	padding: 12px;
 	border-bottom: 1px #ccc solid;
 }
 
-#commentary #commentary-comments div p {
+.commentary #commentary-comments div p {
 	padding: 0;
 	margin: 0;
 }
 
-#commentary #commentary-form {
+#commentary-show {
+	position:absolute;
+	top: 12px;
+	right: 12px;
+	border: 1px solid #999;
+}
+
+#commentary-form form {
 	position: absolute;
 	background: #cfcfcf;
 	top: 12px;
 	right: 12px;
 	padding: 12px;
 	border: 1px solid #999;
-	width: 240px;
+	width: 300px;
 }
 
-#commentary-save {
+#commentary-form form {
+	display: none;
+}
+#commentary-form label {
+	font-size: .8em;
+}
+
+#commentary-form input, #commentary-form textarea {
+	font-size: 1em;
+	width: 276px;
+}
+
+.commentary-button {
+	margin-top: 8px;
+	width: 88px;
+	text-align:center;
+	float: left;
+	margin-right: 8px;
+	font-size: .8em;
+	border: 1px solid #999;
+	background: #fff;
+	padding: 4px;
 	cursor: pointer;
+}
+
+.commentary-button:hover {
+	background: #99CCFF;
 }
